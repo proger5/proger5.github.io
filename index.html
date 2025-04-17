@@ -1,1 +1,104 @@
-Helo World.
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математика</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        input {
+            margin: 10px;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Математика</h1>
+    <div id="question"></div>
+    <input type="number" id="answer" placeholder="Ваш ответ">
+    <button onclick="checkAnswer()">Проверить</button>
+    <div id="result"></div>
+    <button onclick="nextQuestion()">Следующий вопрос</button>
+    <div id="scoreboard">
+        <p>Правильные ответы: <span id="correctCount">0</span></p>
+        <p>Неправильные ответы: <span id="incorrectCount">0</span></p>
+        <p>Процент правильных ответов: <span id="correctPercentage">0</span>%</p>
+    </div>
+
+    <script>
+        let currentQuestion;
+        let correctAnswer;
+        let correctCount = 0;
+        let incorrectCount = 0;
+
+        function generateQuestion() {
+            const isSmallNumbers = Math.random() < 0.5; // 50% шанс на маленькие числа
+            let num1, num2;
+
+            if (isSmallNumbers) {
+                num1 = Math.floor(Math.random() * 11); // числа от 0 до 10
+                num2 = Math.floor(Math.random() * 11);
+            } else {
+                num1 = Math.floor(Math.random() * 10 + 1) * 10; // числа 10, 20, ..., 100
+                num2 = Math.floor(Math.random() * 10 + 1) * 10;
+            }
+
+            const operation = Math.random() < 0.5 ? '+' : '-'; // случайная операция
+
+            // Убедимся, что ответ положительный
+            if (operation === '-' && num1 < num2) {
+                [num1, num2] = [num2, num1]; // Меняем местами, чтобы избежать отрицательных ответов
+            }
+
+            currentQuestion = `${num1} ${operation} ${num2}`;
+            correctAnswer = operation === '+' ? num1 + num2 : num1 - num2;
+
+            document.getElementById('question').innerText = currentQuestion;
+            document.getElementById('result').innerText = '';
+            document.getElementById('answer').value = '';
+        }
+
+        function checkAnswer() {
+            const userAnswer = parseInt(document.getElementById('answer').value);
+            const resultDiv = document.getElementById('result');
+
+            if (userAnswer === correctAnswer) {
+                resultDiv.innerText = `Правильно! \r\n ${currentQuestion} = ${correctAnswer}`;
+                resultDiv.className = 'correct'; // Задаем класс для правильного ответа
+                correctCount++;
+            } else {
+                resultDiv.innerText = `Неправильно! \r\n ${currentQuestion} = ${correctAnswer}`;
+                resultDiv.className = 'incorrect'; // Задаем класс для неправильного ответа
+                incorrectCount++;
+            }
+
+            updateScoreboard();
+        }
+
+        function updateScoreboard() {
+            document.getElementById('correctCount').innerText = correctCount;
+            document.getElementById('incorrectCount').innerText = incorrectCount;
+
+            const totalAnswers = correctCount + incorrectCount;
+            const correctPercentage = totalAnswers > 0 ? ((correctCount / totalAnswers) * 100).toFixed(2) : 0;
+            document.getElementById('correctPercentage').innerText = correctPercentage;
+        }
+
+        function nextQuestion() {
+            generateQuestion();
+        }
+
+        // Генерируем первый вопрос при загрузке страницы
+        window.onload = nextQuestion;
+    </script>
+</body>
+</html>
