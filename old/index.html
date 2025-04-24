@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра в шашки</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(8, 50px);
+            grid-template-rows: repeat(8, 50px);
+            gap: 1px;
+        }
+        .square {
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+        }
+        .dark {
+            background-color: #888;
+        }
+        .piece {
+            width: 95%;
+            height: 95%;
+            border-radius: 50%;
+            cursor: pointer;
+            align-items: center;
+            display: flex;
+        }
+        .black {
+            background-color: black;
+        }
+        .white {
+            background-color: white;
+        }
+        .selected {
+            border: 2px solid orange; /* Подсветка выбранной шашки */
+        }
+        .player-info {
+            margin-right: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .player-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #ccc; /* Цвет фона для фото игрока */
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="player-info">
+            <div class="player-photo" id="playerPhoto_1"></div>
+            <span id="playerName_2"></span>
+        </div>
+        <div id="board"></div>
+        <div class="player-info">
+            <div class="player-photo" id="playerPhoto_2"></div>
+            <span id="playerName_1"></span>
+        </div>
+    </div>
+
+    <script>
+        const board = document.getElementById('board');
+        const boardSize = 8;
+        let selectedPiece = null;
+
+        createPlayer("Игрок 2", "playerName_2", "playerPhoto_2");
+
+        // Создание доски
+        function createBoard() {
+            for (let row = 0; row < boardSize; row++) {
+                for (let col = 0; col < boardSize; col++) {
+                    const square = document.createElement('div');
+                    square.classList.add('square');
+                    if ((row + col) % 2 === 1) {
+                        square.classList.add('dark');
+                        if (row < 3) {
+                            const piece = document.createElement('div');
+                            piece.classList.add('piece', 'black');
+                            piece.dataset.row = row;
+                            piece.dataset.col = col;
+                            square.appendChild(piece);
+                        } else if (row > 4) {
+                            const piece = document.createElement('div');
+                            piece.classList.add('piece', 'white');
+                            piece.dataset.row = row;
+                            piece.dataset.col = col;
+                            square.appendChild(piece);
+                        }
+                    }
+                    board.appendChild(square);
+                }
+            }
+        }
+
+        createPlayer("Игрок 1", "playerName_1", "playerPhoto_1");
+
+        function createPlayer(name, name_id, photo_id) {
+            // Запрос имени игрока
+            //const playerName = prompt("Введите ваше имя:");
+            //document.getElementById(name).textContent = playerName;
+            document.getElementById(name_id).textContent = name;
+
+            // Создание кружка с фото игрока
+            const playerPhoto = document.getElementById(photo_id);
+            // Здесь можно установить изображение игрока, например, через URL
+            playerPhoto.style.backgroundImage = "url('profiles/p1.png')";
+            playerPhoto.style.backgroundSize = "cover";
+        }
+
+        // Обработка клика по шашке или клетке
+        function handleClick(event) {
+            const targetSquare = event.target.closest('.square');
+            if (!targetSquare) return;
+
+            if (selectedPiece) {
+                // Перемещение шашки
+                if (targetSquare.classList.contains('dark') && !targetSquare.firstChild) {
+                    const targetRow = Math.floor(Array.from(board.children).indexOf(targetSquare) / boardSize);
+                    const targetCol = Array.from(board.children).indexOf(targetSquare) % boardSize;
+
+                    if (isValidMove(selectedPiece, targetRow, targetCol)) {
+                        if (Math.abs(selectedPiece.dataset.row - targetRow) === 2 ) {
+                            r = targetRow - selectedPiece.dataset.row;
+                            c = targetCol - selectedPiece.dataset.col;
+                            removePiece(targetRow - r/2, targetCol - c/2);
+                        }
+                        targetSquare.appendChild(selectedPiece);
+                        selectedPiece.dataset.row = targetRow;
+                        selectedPiece.dataset.col = targetCol;
+                        selectedPiece.classList.remove('selected'); // Убираем подсветку
+                        selectedPiece = null;
+
+
+                    }
+                } else {
+                    console.log("Целевая клетка занята или не темная");
+                    // Выбор шашки
+                    selectCheck(targetSquare);
+                }
+            } else {
+                // Выбор шашки
+                selectCheck(targetSquare);
+            }
+        }
+
+        function selectCheck(targetSquare) {
+            const piece = targetSquare.firstChild;
+            if (piece && piece.classList.contains('piece')) {
+                if (selectedPiece) {
+                    selectedPiece.classList.remove('selected'); // Убираем подсветку с предыдущей шашки
+                }
+                selectedPiece = piece;
+                selectedPiece.classList.add('selected'); // Подсвечиваем выбранную шашку
+            }
+        }
+        // Проверка допустимости хода
+        function isValidMove(piece, targetRow, targetCol) {
+            const currentRow = parseInt(piece.dataset.row);
+            const currentCol = parseInt(piece.dataset.col);
+            // Шашка может двигаться на одну клетку вперед
+            canMove = (Math.abs(targetRow - currentRow) === 1 && Math.abs(targetCol - currentCol) === 1);
+
+            // Шашка может двигаться на две клетки вперед
+            canBeat = (Math.abs(targetRow - currentRow) === 2 && Math.abs(targetCol - currentCol) === 2);
+            return canMove || canBeat;
+        }
+
+        function removePiece(row, col) {
+            // Находим квадрат по координатам
+            const squareIndex = row * boardSize + col;
+            const square = board.children[squareIndex];
+
+            // Проверяем, есть ли шашка в квадрате
+            if (square.firstChild) {
+                square.removeChild(square.firstChild); // Удаляем шашку
+                console.log(`Шашка удалена с координат (${row}, ${col})`);
+            } else {
+                console.log(`В клетке (${row}, ${col}) нет шашки`);
+            }
+        }
+
+        // Инициализация игры
+        createBoard();
+        board.addEventListener('click', handleClick);
+    </script>
+</body>
+</html>
